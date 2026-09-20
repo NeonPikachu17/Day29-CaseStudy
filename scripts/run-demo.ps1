@@ -166,7 +166,7 @@ $notifEvent = @{
 
 Print-Info "Step 1: Submitting new event $testEventId (Expect 202 Accepted)..."
 try {
-    $response = Invoke-WebRequest -Uri $targetNotifUrl -Method Post -ContentType "application/json" -Body $notifEvent
+    $response = Invoke-WebRequest -Uri $targetNotifUrl -Method Post -ContentType "application/json" -Body $notifEvent -UseBasicParsing
     if ($response.StatusCode -eq 202) {
         $content = $response.Content | ConvertFrom-Json
         Print-Success "Event ingested successfully! Delivery ID: $($content.deliveryId) (Status: $($content.status))"
@@ -179,7 +179,7 @@ try {
 
 Print-Info "Step 2: Submitting identical event $testEventId (Expect 200 OK SKIPPED deduplication)..."
 try {
-    $dupResponse = Invoke-WebRequest -Uri $targetNotifUrl -Method Post -ContentType "application/json" -Body $notifEvent
+    $dupResponse = Invoke-WebRequest -Uri $targetNotifUrl -Method Post -ContentType "application/json" -Body $notifEvent -UseBasicParsing
     if ($dupResponse.StatusCode -eq 200) {
         $dupContent = $dupResponse.Content | ConvertFrom-Json
         Print-Success "Duplicate event safely skipped! Message: $($dupContent.message) (Status: $($dupContent.status))"
@@ -206,7 +206,7 @@ $outageEvent = @{
 
 try {
     Invoke-WebRequest -Uri $targetNotifUrl -Method Post -ContentType "application/json" `
-        -Headers @{ "X-Simulate-Outage" = "true" } -Body $outageEvent
+        -Headers @{ "X-Simulate-Outage" = "true" } -Body $outageEvent -UseBasicParsing
     Print-Fail "Outage simulation did not return error!"
 } catch {
     $statusCode = $_.Exception.Response.StatusCode.value__

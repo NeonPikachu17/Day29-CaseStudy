@@ -443,7 +443,7 @@ def main():
         "    paymentReference = 'TRF-20261025-001'\n"
         "    timestamp = '2026-10-25T01:00:03Z'\n"
         "} | ConvertTo-Json\n"
-        "Invoke-WebRequest -Uri 'http://localhost:8084/notifications/events' -Method Post -ContentType 'application/json' -Body $event"
+        "Invoke-WebRequest -Uri 'http://localhost:8084/notifications/events' -Method Post -ContentType 'application/json' -Body $event -UseBasicParsing"
     )
     doc.add_paragraph("Expected Output: HTTP 202 Accepted with status DELIVERED and deliveryId (e.g. notif-501).")
     add_screenshot_box(
@@ -460,7 +460,7 @@ def main():
         "Re-submit the exact same event payload with eventId = 'evt-doc-1001' to verify idempotent deduplication."
     )
     add_code_block(doc, 
-        "Invoke-WebRequest -Uri 'http://localhost:8084/notifications/events' -Method Post -ContentType 'application/json' -Body $event"
+        "Invoke-WebRequest -Uri 'http://localhost:8084/notifications/events' -Method Post -ContentType 'application/json' -Body $event -UseBasicParsing"
     )
     doc.add_paragraph("Expected Output: HTTP 200 OK with status SKIPPED and message 'Duplicate event ID'.")
     add_screenshot_box(
@@ -478,7 +478,7 @@ def main():
     )
     add_code_block(doc, 
         "Invoke-WebRequest -Uri 'http://localhost:8084/notifications/events' -Method Post -ContentType 'application/json' `\n"
-        "    -Headers @{ 'X-Simulate-Outage' = 'true' } -Body $event"
+        "    -Headers @{ 'X-Simulate-Outage' = 'true' } -Body $event -UseBasicParsing"
     )
     doc.add_paragraph("Expected Output: HTTP 500 Internal Server Error confirming notification failure does not corrupt the payment.")
     add_screenshot_box(

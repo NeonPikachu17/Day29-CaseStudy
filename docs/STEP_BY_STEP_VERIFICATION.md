@@ -1,8 +1,8 @@
 # EWB Standing Order Processor: Step-by-Step Verification & Screenshot Guide
 
-This guide provides a comprehensive, step-by-step walkthrough to verify all deliverables for **Member 4 (Platform, Gateway/IdP, Notifications & Acceptance Lead)** and system-wide acceptance criteria.
+This guide provides a comprehensive, sequential walkthrough to verify all deliverables for **Member 4 (Platform, Gateway/IdP, Notifications & Acceptance Lead)** and system-wide acceptance criteria.
 
-Each step includes the exact command, expected JSON responses, and a designated **Screenshot Placeholder** ready for your documentation submissions.
+Each step provides the exact execution command, under-the-hood context, expected outputs, and a labeled **Screenshot Placeholder** directly matching the 13 verification sections in [`docs/Bernabe-Docs.docx`](./Bernabe-Docs.docx) and [`docs/DOCUMENTATION.md`](./DOCUMENTATION.md).
 
 ---
 
@@ -11,161 +11,172 @@ Each step includes the exact command, expected JSON responses, and a designated 
 - **Java 21 LTS** installed (`java -version`)
 - **Apache Maven 3.9+** installed (`mvn -version`)
 - **PowerShell 7+** or Windows PowerShell
-- Terminal working directory set to project root: `c:\Users\MSB83776\Documents\antigravity\day-29-neo`
+- Working directory set to root: `c:\Users\MSB83776\Documents\antigravity\day-29-neo`
 
 ---
 
-## Step 1: Run Full Automated Test Suite (100% Green Build)
+## Step 1: Automated Unit & Integration Test Suite
 
-Run Maven across the modules to verify that `common`, `gateway-service`, and `notification-service` tests pass with zero failures:
+Execute Maven across the entire multi-module project to verify that all common contracts, gateway security rules, mock IdP, and notification deduplication tests pass with 100% success.
 
 ```powershell
 mvn test
 ```
 
 ### Expected Output:
-```
+```text
 [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0 -- in com.ewb.gateway.SecurityRbacTest & AuthControllerTest
 [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.ewb.notification.NotificationServiceTest & NotificationControllerTest
+[INFO] Reactor Summary for EWB Standing Order Platform 1.0.0-SNAPSHOT:
+[INFO]   EWB Common Module .................................. SUCCESS
+[INFO]   EWB Config Server .................................. SUCCESS
+[INFO]   EWB Eureka Server .................................. SUCCESS
+[INFO]   EWB Gateway Service ................................ SUCCESS
+[INFO]   EWB Notification Service ........................... SUCCESS
+[INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 ```
 
-> 📸 **SCREENSHOT #1: Maven Test Suite Success**
-> - **Target:** Terminal output of `mvn test`
-> - **What to capture:** The `[INFO] BUILD SUCCESS` message showing all tests passing.
+> 📸 **SCREENSHOT #1: Maven Automated Test Suite Success**  
+> - **Target:** Terminal / PowerShell  
+> - **Verification Item:** Terminal output displaying `Reactor Summary` with all modules SUCCESS and `[INFO] BUILD SUCCESS`.  
 > 
 > ```
-> [PASTE SCREENSHOT 1 HERE: Maven Test Suite Success]
+> [ PASTE SCREENSHOT 1 HERE: Maven Test Suite Success ]
 > ```
 
 ---
 
-## Step 2: Start Infrastructure Services (Config & Eureka)
+## Step 2: Spring Cloud Eureka Service Discovery Registry
 
-Open a new PowerShell terminal and start the Spring Cloud Config Server:
-
-```powershell
-mvn spring-boot:run -pl config-server
-```
-
-Open a second PowerShell terminal and start the Netflix Eureka Discovery Server:
+Start Eureka discovery server on port 8761 and inspect the web console in your browser:
 
 ```powershell
+# In a dedicated terminal:
 mvn spring-boot:run -pl eureka-server
 ```
 
-Open your browser and navigate to:
-**`http://localhost:8761`**
+Open Browser: **`http://localhost:8761`**
 
-### Expected Result:
-The Spring Cloud Netflix Eureka dashboard displays with System Status and instance registry.
+### Expected Output:
+The Spring Cloud Netflix Eureka dashboard displays with active System Status and all registered service instances (`GATEWAY-SERVICE`, `STANDING-ORDER-SERVICE`, `EXECUTION-SERVICE`, `PAYMENT-SERVICE`, `NOTIFICATION-SERVICE`).
 
-> 📸 **SCREENSHOT #2: Eureka Discovery Dashboard**
-> - **Target:** Browser window at `http://localhost:8761`
-> - **What to capture:** Eureka web console displaying running environment.
+> 📸 **SCREENSHOT #2: Eureka Discovery Dashboard**  
+> - **Target:** Browser window at `http://localhost:8761`  
+> - **Verification Item:** Eureka web console displaying active server status and registered microservices.  
 > 
 > ```
-> [PASTE SCREENSHOT 2 HERE: Eureka Dashboard]
+> [ PASTE SCREENSHOT 2 HERE: Eureka Dashboard ]
 > ```
 
 ---
 
-## Step 3: Verify Centralized Configuration Server
+## Step 3: Spring Cloud Centralized Config Server
 
-Open your browser or run the following PowerShell command to test Config Server native profile delivery:
+Verify that `config-server` on port 8888 is serving centralized YAML configuration profiles natively from `config-repo/`:
 
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:8888/gateway-service/default" -Method Get | ConvertTo-Json -Depth 5
 ```
 
-### Expected Result:
-HTTP 200 OK returning property sources including `gateway-service.yml` and `ewb.routes` mapping.
+### Expected Output (`HTTP 200 OK`):
+JSON payload containing `propertySources` with route definitions and logging configurations for `gateway-service`.
 
-> 📸 **SCREENSHOT #3: Config Server Profile Response**
-> - **Target:** Browser or terminal at `http://localhost:8888/gateway-service/default`
-> - **What to capture:** JSON output showing the distributed configuration profile.
-> 
-> ```
-> [PASTE SCREENSHOT 3 HERE: Config Server Response]
-> ```
-
----
-
-## Step 4: Start Gateway Service & Notification Service
-
-Open two additional terminals and start the services owned by Member 4:
-
-**Terminal 3 (Gateway Service - Port 8080):**
-```powershell
-mvn spring-boot:run -pl gateway-service
-```
-
-**Terminal 4 (Notification Service - Port 8084):**
-```powershell
-mvn spring-boot:run -pl notification-service
-```
-
----
-
-## Step 5: Test Mock IdP Authentication (`POST /auth/login`)
-
-Authenticate as **Asuna Yuuki** (`ROLE_CUSTOMER`):
-
-```powershell
-$body = @{ username = "asuna" } | ConvertTo-Json
-$authResponse = Invoke-RestMethod -Uri "http://localhost:8080/auth/login" -Method Post -ContentType "application/json" -Body $body
-$authResponse | Format-List
-```
-
-### Expected JSON Response (`200 OK`):
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "username": "asuna",
-  "fullName": "Asuna Yuuki",
-  "role": "ROLE_CUSTOMER",
-  "accountIds": [
-    "EWB-ASU-1001",
-    "EWB-ASU-2001"
+  "name": "gateway-service",
+  "profiles": ["default"],
+  "propertySources": [
+    {
+      "name": "file:../config-repo/gateway-service.yml",
+      "source": {
+        "server.port": 8080,
+        "spring.application.name": "gateway-service",
+        "ewb.routes.standing-order-service": "http://localhost:8081",
+        "ewb.routes.execution-service": "http://localhost:8082",
+        "ewb.routes.payment-service": "http://localhost:8083",
+        "ewb.routes.notification-service": "http://localhost:8084"
+      }
+    }
   ]
 }
 ```
 
-Authenticate as an unknown persona to verify rejection:
-
-```powershell
-$unknownBody = @{ username = "stranger" } | ConvertTo-Json
-Invoke-RestMethod -Uri "http://localhost:8080/auth/login" -Method Post -ContentType "application/json" -Body $unknownBody
-```
-
-### Expected JSON Response (`401 Unauthorized`):
-```json
-{
-  "status": "UNAUTHORIZED",
-  "message": "Unknown persona: stranger"
-}
-```
-
-> 📸 **SCREENSHOT #4: Mock IdP Login & JWT Generation**
-> - **Target:** Postman or Terminal executing `POST /auth/login`
-> - **What to capture:** Asuna's generated JWT token, role `ROLE_CUSTOMER`, and assigned accounts.
+> 📸 **SCREENSHOT #3: Config Server Native Profile Distribution**  
+> - **Target:** Browser or Terminal at `http://localhost:8888/gateway-service/default`  
+> - **Verification Item:** JSON response confirming `config-server` is serving `gateway-service.yml`.  
 > 
 > ```
-> [PASTE SCREENSHOT 4 HERE: Mock IdP Login]
+> [ PASTE SCREENSHOT 3 HERE: Config Server Response ]
 > ```
 
 ---
 
-## Step 6: Test Gateway Security & RBAC Enforcement
+## Step 4: Mock Identity Provider Login & JWT Generation
 
-### 6.1. External Block on Internal Inter-Service Endpoints
-Attempt to directly call `/internal/standing-orders/due` from outside the perimeter:
+Submit a POST request to `/auth/login` with username `asuna` to verify JWT token generation matching contracts.md Section 2:
+
+```powershell
+$body = @{ username = "asuna" } | ConvertTo-Json
+$auth = Invoke-RestMethod -Uri "http://localhost:8080/auth/login" -Method Post -ContentType "application/json" -Body $body
+$auth | Format-List
+```
+
+### Expected Output (`HTTP 200 OK`):
+```text
+token      : eyJhbGciOiJIUzM4NCJ9...
+username   : asuna
+fullName   : Asuna Yuuki
+role       : ROLE_CUSTOMER
+accountIds : {EWB-ASU-1001, EWB-ASU-2001}
+```
+
+> 📸 **SCREENSHOT #4: Mock IdP Login for Asuna (ROLE_CUSTOMER)**  
+> - **Target:** Postman or Terminal: `POST http://localhost:8080/auth/login`  
+> - **Verification Item:** HTTP 200 response displaying signed JWT token, persona full name, and account assignments.  
+> 
+> ```
+> [ PASTE SCREENSHOT 4 HERE: Mock IdP Login ]
+> ```
+
+---
+
+## Step 5: Unknown User Login Rejection (401 Unauthorized)
+
+Attempt to authenticate with an unrecognized persona to ensure perimeter security rejects unauthorized credentials:
+
+```powershell
+$unknownBody = @{ username = "unknown_hacker" } | ConvertTo-Json
+Invoke-RestMethod -Uri "http://localhost:8080/auth/login" -Method Post -ContentType "application/json" -Body $unknownBody
+```
+
+### Expected Output (`HTTP 401 Unauthorized`):
+```json
+{
+  "status": "UNAUTHORIZED",
+  "message": "Unknown persona: unknown_hacker"
+}
+```
+
+> 📸 **SCREENSHOT #5: Mock IdP Rejection of Unknown Persona (401 Unauthorized)**  
+> - **Target:** Postman or Terminal: `POST http://localhost:8080/auth/login`  
+> - **Verification Item:** HTTP 401 Unauthorized error response confirming perimeter authentication rejection.  
+> 
+> ```
+> [ PASTE SCREENSHOT 5 HERE: Mock IdP 401 Unauthorized ]
+> ```
+
+---
+
+## Step 6: Gateway Security - Direct Internal Endpoint Block
+
+Attempt to directly access an internal inter-service endpoint (`/internal/**`) from outside the perimeter:
 
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:8080/internal/standing-orders/due" -Method Get
 ```
 
-### Expected Result (`403 Forbidden`):
+### Expected Output (`HTTP 403 Forbidden`):
 ```json
 {
   "status": "FORBIDDEN",
@@ -173,23 +184,22 @@ Invoke-RestMethod -Uri "http://localhost:8080/internal/standing-orders/due" -Met
 }
 ```
 
-> 📸 **SCREENSHOT #5: Gateway Internal Endpoint Protection**
-> - **Target:** Postman / Terminal calling `GET http://localhost:8080/internal/standing-orders/due`
-> - **What to capture:** `403 Forbidden` rejection blocking external access to internal routes.
+> 📸 **SCREENSHOT #6: Perimeter Block of External /internal/** Access (403 Forbidden)**  
+> - **Target:** Postman or Terminal: `GET http://localhost:8080/internal/standing-orders/due`  
+> - **Verification Item:** HTTP 403 Forbidden response proving the Gateway blocks external access to internal endpoints.  
 > 
 > ```
-> [PASTE SCREENSHOT 5 HERE: Internal Block 403]
+> [ PASTE SCREENSHOT 6 HERE: Internal Block 403 ]
 > ```
 
 ---
 
-### 6.2. Source Account Ownership Validation
-Asuna attempts to create a standing order using Kirito's account (`EWB-KIR-5001`):
+## Step 7: Gateway Security - Account Ownership Validation
+
+Asuna (`ROLE_CUSTOMER`) attempts to create a standing order specifying Kirito's account (`EWB-KIR-5001`):
 
 ```powershell
-$asunaToken = $authResponse.token
-
-$hijackPayload = @{
+$hijackOrder = @{
     sourceAccountId = "EWB-KIR-5001"
     destinationAccountId = "EWB-ASU-2001"
     amount = 5000.00
@@ -202,10 +212,10 @@ $hijackPayload = @{
 } | ConvertTo-Json
 
 Invoke-RestMethod -Uri "http://localhost:8080/standing-orders" -Method Post -ContentType "application/json" `
-    -Headers @{ Authorization = "Bearer $asunaToken" } -Body $hijackPayload
+    -Headers @{ Authorization = "Bearer $($auth.token)" } -Body $hijackOrder
 ```
 
-### Expected Result (`403 Forbidden`):
+### Expected Output (`HTTP 403 Forbidden`):
 ```json
 {
   "status": "FORBIDDEN",
@@ -213,23 +223,52 @@ Invoke-RestMethod -Uri "http://localhost:8080/standing-orders" -Method Post -Con
 }
 ```
 
-> 📸 **SCREENSHOT #6: Gateway Account Ownership Rejection**
-> - **Target:** Postman / Terminal creating order with unauthorized account
-> - **What to capture:** `403 Forbidden` with "does not belong to authenticated customer" error message.
+> 📸 **SCREENSHOT #7: Source Account Hijacking Rejection (403 Forbidden)**  
+> - **Target:** Postman or Terminal: `POST http://localhost:8080/standing-orders`  
+> - **Verification Item:** HTTP 403 Forbidden response proving Gateway enforces source account ownership validation.  
 > 
 > ```
-> [PASTE SCREENSHOT 6 HERE: Account Ownership 403]
+> [ PASTE SCREENSHOT 7 HERE: Account Ownership 403 ]
 > ```
 
 ---
 
-## Step 7: Test Notification Service (Ingestion, Deduplication & Outage)
+## Step 8: Gateway Security - Auditor Read-Only Enforcement
 
-### 7.1. Ingest Execution Outbox Event (Normal Delivery)
+Sinon (`ROLE_AUDITOR`) attempts to execute a mutating POST request:
 
 ```powershell
-$eventPayload = @{
-    eventId = "evt-test-8899"
+$sinonAuth = Invoke-RestMethod -Uri "http://localhost:8080/auth/login" -Method Post -ContentType "application/json" -Body (@{ username = "sinon" } | ConvertTo-Json)
+
+Invoke-RestMethod -Uri "http://localhost:8080/standing-orders" -Method Post -ContentType "application/json" `
+    -Headers @{ Authorization = "Bearer $($sinonAuth.token)" } -Body $hijackOrder
+```
+
+### Expected Output (`HTTP 403 Forbidden`):
+```json
+{
+  "status": "FORBIDDEN",
+  "message": "Auditor role has read-only access"
+}
+```
+
+> 📸 **SCREENSHOT #8: Auditor Read-Only Restriction Enforced (403 Forbidden)**  
+> - **Target:** Postman or Terminal: `POST http://localhost:8080/standing-orders`  
+> - **Verification Item:** HTTP 403 Forbidden response proving the Gateway restricts Auditor accounts to read-only actions.  
+> 
+> ```
+> [ PASTE SCREENSHOT 8 HERE: Auditor Read-Only 403 ]
+> ```
+
+---
+
+## Step 9: Notification Consumer - Outbox Event Ingestion
+
+Submit a new execution outbox event to `POST /notifications/events`:
+
+```powershell
+$event = @{
+    eventId = "evt-doc-1001"
     executionId = "exec-101"
     standingOrderId = "so-9001"
     customerId = "asuna"
@@ -244,10 +283,10 @@ $eventPayload = @{
     timestamp = "2026-10-25T01:00:03Z"
 } | ConvertTo-Json
 
-Invoke-WebRequest -Uri "http://localhost:8084/notifications/events" -Method Post -ContentType "application/json" -Body $eventPayload
+Invoke-WebRequest -Uri "http://localhost:8084/notifications/events" -Method Post -ContentType "application/json" -Body $event -UseBasicParsing
 ```
 
-### Expected Response (`202 Accepted`):
+### Expected Output (`HTTP 202 Accepted`):
 ```json
 {
   "status": "DELIVERED",
@@ -255,25 +294,25 @@ Invoke-WebRequest -Uri "http://localhost:8084/notifications/events" -Method Post
 }
 ```
 
-> 📸 **SCREENSHOT #7: Notification Event Ingested (202 Accepted)**
-> - **Target:** Postman / Terminal
-> - **What to capture:** HTTP status code `202 Accepted` and assigned `deliveryId`.
+> 📸 **SCREENSHOT #9: Notification Event Ingestion Success (202 Accepted)**  
+> - **Target:** Postman or Terminal: `POST http://localhost:8084/notifications/events`  
+> - **Verification Item:** HTTP status 202 Accepted, status `DELIVERED`, and an assigned `deliveryId`.  
 > 
 > ```
-> [PASTE SCREENSHOT 7 HERE: Notification Ingestion 202 Accepted]
+> [ PASTE SCREENSHOT 9 HERE: Notification Ingestion 202 Accepted ]
 > ```
 
 ---
 
-### 7.2. Ingest Duplicate Event (Idempotent Deduplication)
+## Step 10: Notification Deduplication - Duplicate Event Handling
 
-Submit the exact same payload with `eventId = "evt-test-8899"` again:
+Submit the exact same event payload (`eventId = "evt-doc-1001"`) again to verify idempotency:
 
 ```powershell
-Invoke-WebRequest -Uri "http://localhost:8084/notifications/events" -Method Post -ContentType "application/json" -Body $eventPayload
+Invoke-WebRequest -Uri "http://localhost:8084/notifications/events" -Method Post -ContentType "application/json" -Body $event -UseBasicParsing
 ```
 
-### Expected Response (`200 OK`):
+### Expected Output (`HTTP 200 OK`):
 ```json
 {
   "status": "SKIPPED",
@@ -281,26 +320,26 @@ Invoke-WebRequest -Uri "http://localhost:8084/notifications/events" -Method Post
 }
 ```
 
-> 📸 **SCREENSHOT #8: Notification Deduplication (200 OK SKIPPED)**
-> - **Target:** Postman / Terminal
-> - **What to capture:** HTTP status code `200 OK` and `"status": "SKIPPED"`, `"message": "Duplicate event ID"`.
+> 📸 **SCREENSHOT #10: Notification Deduplication Skipping Duplicate Event (200 OK SKIPPED)**  
+> - **Target:** Postman or Terminal: `POST http://localhost:8084/notifications/events`  
+> - **Verification Item:** HTTP 200 OK with status `SKIPPED` and message `"Duplicate event ID"`.  
 > 
 > ```
-> [PASTE SCREENSHOT 8 HERE: Notification Deduplication 200 OK]
+> [ PASTE SCREENSHOT 10 HERE: Notification Deduplication 200 OK ]
 > ```
 
 ---
 
-### 7.3. Simulate Notification Gateway Outage
+## Step 11: Notification Outage Simulation
 
-Submit an event with the `X-Simulate-Outage: true` header:
+Submit an event with the `X-Simulate-Outage: true` header to simulate a downstream gateway delivery failure:
 
 ```powershell
 Invoke-WebRequest -Uri "http://localhost:8084/notifications/events" -Method Post -ContentType "application/json" `
-    -Headers @{ "X-Simulate-Outage" = "true" } -Body $eventPayload
+    -Headers @{ "X-Simulate-Outage" = "true" } -Body $event -UseBasicParsing
 ```
 
-### Expected Response (`500 Internal Server Error`):
+### Expected Output (`HTTP 500 Internal Server Error`):
 ```json
 {
   "status": "FAILED",
@@ -308,72 +347,53 @@ Invoke-WebRequest -Uri "http://localhost:8084/notifications/events" -Method Post
 }
 ```
 
-> 📸 **SCREENSHOT #9: Notification Outage Simulation (500 Internal Server Error)**
-> - **Target:** Postman / Terminal
-> - **What to capture:** HTTP status code `500` confirming that notification outage simulation triggers cleanly.
+> 📸 **SCREENSHOT #11: Notification Outage Simulation Clean Failure (500 Error)**  
+> - **Target:** Postman or Terminal: `POST http://localhost:8084/notifications/events`  
+> - **Verification Item:** HTTP 500 status confirming that downstream notification outages fail cleanly without impacting Core Banking transactions.  
 > 
 > ```
-> [PASTE SCREENSHOT 9 HERE: Outage Simulation 500]
+> [ PASTE SCREENSHOT 11 HERE: Outage Simulation 500 Error ]
 > ```
 
 ---
 
-## Step 8: Run Automated Live Demo Script
+## Step 12: Automated PowerShell Live Demo Runner
 
-Execute the provided end-to-end automated PowerShell runner:
+Execute the automated end-to-end live demonstration script:
 
 ```powershell
 .\scripts\run-demo.ps1
 ```
 
 ### Expected Output:
-Color-coded terminal showing all test scenarios with `[PASS]` tags:
-- Mock IdP Authentication (Asuna, Agil, Sinon)
-- Gateway RBAC & Security Perimeter Enforcement
-- Account Ownership & Read-Only Checks
-- Notification Ingestion & Deduplication
-- Core Banking Outage Simulation
+Color-coded terminal execution showing all contract test scenarios passing with `[PASS]` tags:
+- Mock IdP Authentication (Asuna, Agil, Sinon, Stranger rejection)
+- Gateway RBAC & Security Perimeter Enforcement (`/internal/**` block, account ownership, auditor read-only)
+- Notification Ingestion, Deduplication, and Delivery Gateway Outage Simulation
 
-> 📸 **SCREENSHOT #10: Automated Demo Script Execution**
-> - **Target:** Terminal running `.\scripts\run-demo.ps1`
-> - **What to capture:** Colorized green `[PASS]` results and demonstration summary banner.
+> 📸 **SCREENSHOT #12: Automated Demonstration Runner (run-demo.ps1)**  
+> - **Target:** PowerShell Terminal: `.\scripts\run-demo.ps1`  
+> - **Verification Item:** Terminal output displaying green `[PASS]` results for all scenarios and final success banner.  
 > 
 > ```
-> [PASTE SCREENSHOT 10 HERE: Automated Demo Script]
+> [ PASTE SCREENSHOT 12 HERE: Automated Demo Script ]
 > ```
 
 ---
 
-## Step 9: Postman Collection Verification
+## Step 13: Postman Collection Test Suite Execution
 
-1. Open Postman.
-2. Click **Import** and select:
-   `postman/ewb-standing-order.postman_collection.json`
-3. Click **Run collection**.
-4. Verify all requests execute and assertions pass.
+Import and execute the postman test suite in the Postman app:
 
-> 📸 **SCREENSHOT #11: Postman Collection Runner**
-> - **Target:** Postman Collection Runner window
-> - **What to capture:** All requests in `EWB Standing Order Platform - API Suite` passing with 100% green tests.
+1. Open **Postman**.
+2. Click **Import** $\rightarrow$ select `postman/ewb-standing-order.postman_collection.json`.
+3. Click **Run Collection**.
+4. Verify all 15 requests pass with 100% green tests.
+
+> 📸 **SCREENSHOT #13: Postman Collection Runner Execution (100% Passed)**  
+> - **Target:** Postman App: Collection Runner  
+> - **Verification Item:** Postman Collection Runner window displaying all requests passing with 100% green assertions.  
 > 
 > ```
-> [PASTE SCREENSHOT 11 HERE: Postman Collection Runner]
+> [ PASTE SCREENSHOT 13 HERE: Postman Collection Runner ]
 > ```
-
----
-
-## Summary Checklist for Member 4 Acceptance
-
-- [x] Parent `pom.xml` and `common` module clean build.
-- [x] Config Server (`:8888`) serves native configurations from `config-repo/`.
-- [x] Eureka Server (`:8761`) service discovery active.
-- [x] Gateway Mock IdP (`:8080/auth/login`) issues signed JWTs for all SAO personas.
-- [x] Gateway RBAC and source account ownership validation enforced.
-- [x] Gateway blocks external access to `/internal/**`.
-- [x] Notification Service (`:8084/notifications/events`) ingests events (`202 Accepted`).
-- [x] Notification Service safely skips duplicate event IDs (`200 OK SKIPPED`).
-- [x] Notification Service simulates delivery outages (`500 Internal Server Error`).
-- [x] Dockerfile and `docker-compose.yml` orchestrates all 7 services.
-- [x] Complete Postman collection provided.
-- [x] Automated live demonstration script `scripts/run-demo.ps1` provided.
-- [x] Step-by-step verification guide with screenshot placeholders completed.
