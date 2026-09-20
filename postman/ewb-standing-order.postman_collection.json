@@ -1,0 +1,539 @@
+{
+  "info": {
+    "_postman_id": "e8f3b201-9a7c-4822-b9e1-6d7c48f8b001",
+    "name": "EWB Standing Order Platform - API Suite",
+    "description": "Comprehensive Postman collection for EWB Standing Order Processor microservices. Covers Authentication, Standing Orders, Executions, Core Banking Transfers, and Notifications.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "gateway_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication & IdP",
+      "item": [
+        {
+          "name": "Login - Asuna (ROLE_CUSTOMER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(pm.response.code).to.eql(200);",
+                  "pm.collectionVariables.set('token', jsonData.token);",
+                  "pm.environment.set('token', jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"asuna\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Kirito (ROLE_CUSTOMER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kirito\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Agil (ROLE_OPERATIONS)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"agil\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Sinon (ROLE_AUDITOR)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"sinon\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Unknown User (401 Unauthorized)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"unknown_user\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/auth/login",
+              "host": ["{{gateway_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Standing Order Service",
+      "item": [
+        {
+          "name": "Create Standing Order (Asuna - Valid)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"EWB-ASU-1001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"amount\": 5000.00,\n  \"currency\": \"PHP\",\n  \"frequency\": \"MONTHLY\",\n  \"dayOfMonth\": 25,\n  \"executionTime\": \"09:00\",\n  \"timeZone\": \"Asia/Manila\",\n  \"startDate\": \"2026-10-25\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/standing-orders",
+              "host": ["{{gateway_url}}"],
+              "path": ["standing-orders"]
+            }
+          }
+        },
+        {
+          "name": "Create Standing Order (Asuna - Hijack Kirito Account 403 Forbidden)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"EWB-KIR-5001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"amount\": 5000.00,\n  \"currency\": \"PHP\",\n  \"frequency\": \"MONTHLY\",\n  \"dayOfMonth\": 25,\n  \"executionTime\": \"09:00\",\n  \"timeZone\": \"Asia/Manila\",\n  \"startDate\": \"2026-10-25\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/standing-orders",
+              "host": ["{{gateway_url}}"],
+              "path": ["standing-orders"]
+            }
+          }
+        },
+        {
+          "name": "List Standing Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway_url}}/standing-orders",
+              "host": ["{{gateway_url}}"],
+              "path": ["standing-orders"]
+            }
+          }
+        },
+        {
+          "name": "Pause Standing Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway_url}}/standing-orders/so-9001/pause",
+              "host": ["{{gateway_url}}"],
+              "path": ["standing-orders", "so-9001", "pause"]
+            }
+          }
+        },
+        {
+          "name": "Resume Standing Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway_url}}/standing-orders/so-9001/resume",
+              "host": ["{{gateway_url}}"],
+              "path": ["standing-orders", "so-9001", "resume"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Standing Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway_url}}/standing-orders/so-9001/cancel",
+              "host": ["{{gateway_url}}"],
+              "path": ["standing-orders", "so-9001", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Core Banking (Payment Service)",
+      "item": [
+        {
+          "name": "Execute Transfer - Happy Path",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "so-9001:2026-10-25T01:00:00Z"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reference\": \"TRF-20261025-001\",\n  \"sourceAccountId\": \"EWB-ASU-1001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"amount\": 5000.00,\n  \"currency\": \"PHP\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/transfers",
+              "host": ["{{gateway_url}}"],
+              "path": ["transfers"]
+            }
+          }
+        },
+        {
+          "name": "Execute Transfer - Insufficient Funds (Klein 422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "so-9002:2026-10-25T01:00:00Z"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reference\": \"TRF-20261025-002\",\n  \"sourceAccountId\": \"EWB-KLN-4001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"amount\": 5000.00,\n  \"currency\": \"PHP\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/transfers",
+              "host": ["{{gateway_url}}"],
+              "path": ["transfers"]
+            }
+          }
+        },
+        {
+          "name": "Execute Transfer - Frozen Account (Heathcliff 422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "so-9003:2026-10-25T01:00:00Z"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reference\": \"TRF-20261025-003\",\n  \"sourceAccountId\": \"EWB-HTH-3001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"amount\": 5000.00,\n  \"currency\": \"PHP\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/transfers",
+              "host": ["{{gateway_url}}"],
+              "path": ["transfers"]
+            }
+          }
+        },
+        {
+          "name": "Execute Transfer - Simulate Timeout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "so-9004:2026-10-25T01:00:00Z"
+              },
+              {
+                "key": "X-Simulate-Timeout",
+                "value": "true"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reference\": \"TRF-20261025-004\",\n  \"sourceAccountId\": \"EWB-ASU-1001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"amount\": 1000.00,\n  \"currency\": \"PHP\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/transfers",
+              "host": ["{{gateway_url}}"],
+              "path": ["transfers"]
+            }
+          }
+        },
+        {
+          "name": "Resolve Uncertain Outcome by Reference",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway_url}}/transfers/by-reference/TRF-20261025-001",
+              "host": ["{{gateway_url}}"],
+              "path": ["transfers", "by-reference", "TRF-20261025-001"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Notification Service",
+      "item": [
+        {
+          "name": "Ingest Event - Normal Delivery (202 Accepted)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-pm-1001\",\n  \"executionId\": \"exec-101\",\n  \"standingOrderId\": \"so-9001\",\n  \"customerId\": \"asuna\",\n  \"eventType\": \"EXECUTION_COMPLETED\",\n  \"status\": \"SUCCESS\",\n  \"amount\": 5000.00,\n  \"currency\": \"PHP\",\n  \"sourceAccountId\": \"EWB-ASU-1001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"paymentReference\": \"TRF-20261025-001\",\n  \"errorMessage\": null,\n  \"timestamp\": \"2026-10-25T01:00:03Z\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/notifications/events",
+              "host": ["{{gateway_url}}"],
+              "path": ["notifications", "events"]
+            }
+          }
+        },
+        {
+          "name": "Ingest Event - Duplicate ID (200 OK SKIPPED)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-pm-1001\",\n  \"executionId\": \"exec-101\",\n  \"standingOrderId\": \"so-9001\",\n  \"customerId\": \"asuna\",\n  \"eventType\": \"EXECUTION_COMPLETED\",\n  \"status\": \"SUCCESS\",\n  \"amount\": 5000.00,\n  \"currency\": \"PHP\",\n  \"sourceAccountId\": \"EWB-ASU-1001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"paymentReference\": \"TRF-20261025-001\",\n  \"errorMessage\": null,\n  \"timestamp\": \"2026-10-25T01:00:03Z\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/notifications/events",
+              "host": ["{{gateway_url}}"],
+              "path": ["notifications", "events"]
+            }
+          }
+        },
+        {
+          "name": "Ingest Event - Simulate Outage (500 Internal Server Error)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Simulate-Outage",
+                "value": "true"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-pm-9999\",\n  \"executionId\": \"exec-999\",\n  \"standingOrderId\": \"so-9001\",\n  \"customerId\": \"asuna\",\n  \"eventType\": \"EXECUTION_COMPLETED\",\n  \"status\": \"SUCCESS\",\n  \"amount\": 5000.00,\n  \"currency\": \"PHP\",\n  \"sourceAccountId\": \"EWB-ASU-1001\",\n  \"destinationAccountId\": \"EWB-ASU-2001\",\n  \"paymentReference\": \"TRF-20261025-999\",\n  \"errorMessage\": null,\n  \"timestamp\": \"2026-10-25T01:00:03Z\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/notifications/events",
+              "host": ["{{gateway_url}}"],
+              "path": ["notifications", "events"]
+            }
+          }
+        },
+        {
+          "name": "List Delivered Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway_url}}/notifications",
+              "host": ["{{gateway_url}}"],
+              "path": ["notifications"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Security & Perimeter Tests",
+      "item": [
+        {
+          "name": "Direct External Access to Internal Endpoint (403 Forbidden)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{gateway_url}}/internal/standing-orders/due",
+              "host": ["{{gateway_url}}"],
+              "path": ["internal", "standing-orders", "due"]
+            }
+          }
+        },
+        {
+          "name": "Missing Token on Protected Route (401 Unauthorized)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{gateway_url}}/standing-orders",
+              "host": ["{{gateway_url}}"],
+              "path": ["standing-orders"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
